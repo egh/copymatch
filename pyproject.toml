@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "copymatch"
+version = "0.1.0"
+description = ""
+authors = ["Erik Hetzner <egh@e6h.org>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+nltk = "^3.8.1"
+pymupdf = "^1.23.22"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.2.0"
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+copymatch = 'copymatch.copymatch:main'
