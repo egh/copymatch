@@ -1,8 +1,9 @@
 import os
 import itertools
+import string
 import fitz
-from typing import Optional, List
-from copymatch import make_state, match_text, PDFWord, normalize_text
+from typing import Optional, List, Tuple
+from copymatch import make_state, match_text, PDFWord, normalize, filter_token
 import argparse
 
 COLORS = [
@@ -24,20 +25,21 @@ COLORS = [
 ]
 
 
-def convert_color(rgb: int):
+def convert_color(rgb: int) -> Tuple[float, float, float]:
     return (((rgb >> 16) & 255) / 255, ((rgb >> 8) & 255) / 255, (rgb & 255) / 255)
 
 
-def extract_words(path):
+def extract_words(path) -> List[PDFWord]:
     raw_words = [
         (page_no, word)
         for (page_no, page) in enumerate(fitz.open(path))
-        for word in page.get_text("words", sort=True)
+        for word in page.get_text("words", sort=True, delimiters=string.punctuation)
+        if filter_token(word[4])
     ]
 
     return [
         PDFWord(
-            token=normalize_text(word[4]),
+            token=normalize(word[4]),
             pos=pos,
             rect=fitz.Rect(word[0:4]),
             page_no=page_no,

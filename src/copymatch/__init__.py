@@ -47,8 +47,12 @@ class State(Container[str], Iterable[str]):
         return self.length
 
 
-def normalize_text(word: str):
-    return unicodedata.normalize("NFKD", word).casefold()
+def normalize(token: str):
+    return unicodedata.normalize("NFKD", token).casefold()
+
+
+def filter_token(token: str):
+    return token.isalpha()
 
 
 # Assumption: Original text does not contain repeated bigrams, and if
@@ -92,5 +96,5 @@ def match_text(base: State, text: List[Word]):
 
 
 def tokenize(text: str):
-    tokens = [token for token in word_tokenize(text) if token.isalpha()]
-    return [Word(token=normalize_text(w), pos=pos) for (pos, w) in enumerate(tokens)]
+    tokens = [token for token in word_tokenize(text) if filter_token(token)]
+    return [Word(token=normalize(w), pos=pos) for (pos, w) in enumerate(tokens)]

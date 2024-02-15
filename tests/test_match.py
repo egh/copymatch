@@ -1,4 +1,4 @@
-from copymatch import State, match_text, make_state, tokenize
+from copymatch import State, match_text, make_state, tokenize, normalize, filter_token
 
 
 def test_match():
@@ -40,3 +40,15 @@ def test_make_state_large():
         base, tokenize("lorem rutrum donec consectetur dui nec libero egestas")
     )
     assert matches[0].pos == 99
+
+
+def test_normalize():
+    assert normalize("fulﬁll") == "fulfill"
+    assert normalize("FULFILL") == "fulfill"
+    assert normalize("Straße") == "strasse"
+    assert normalize("Congreſs") == "congress"
+
+
+def test_filter_token():
+    assert filter_token(".") is False
+    assert filter_token("word") is True
