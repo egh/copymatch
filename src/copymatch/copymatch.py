@@ -51,24 +51,24 @@ def extract_words(path) -> List[PDFWord]:
     ]
 
 
-# def merge_word_rects(words: List[PDFWord]):
-#     retval: List[fitz.Rect] = []
-#     last_word: Optional[PDFWord] = None
-#     for word in words:
-#         if len(retval) == 0:
-#             retval.append(word.rect)
-#         else:
-#             if (
-#                 (last_word is not None)
-#                 and (last_word.block_no == word.block_no)
-#                 and (last_word.line_no == word.line_no)
-#                 and ((last_word.word_no + 1) == word.word_no)
-#             ):
-#                 retval[-1].include_rect(word.rect)
-#             else:
-#                 retval.append(word.rect)
-#             last_word = word
-#     return retval
+def merge_word_rects(words: List[PDFWord]):
+    retval: List[fitz.Rect] = []
+    last_word: Optional[PDFWord] = None
+    for word in words:
+        if len(retval) == 0:
+            retval.append(word.rect)
+        else:
+            if (
+                (last_word is not None)
+                and (last_word.block_no == word.block_no)
+                and (last_word.line_no == word.line_no)
+                and ((last_word.pos + 1) == word.pos)
+            ):
+                retval[-1].include_rect(word.rect)
+            else:
+                retval.append(word.rect)
+            last_word = word
+    return retval
 
 
 def main():
@@ -88,7 +88,7 @@ def main():
             match_text(state, extract_words(path)), lambda word: word.page_no
         ):
             page = original_doc[page_no]
-            annot = page.add_highlight_annot(quads=[word.rect for word in words])
+            annot = page.add_highlight_annot(quads=merge_word_rects(words))
             annot.set_colors(stroke=convert_color(COLORS[color_no]))
             annot.set_info(title=f"{author}, {title} ({os.path.basename(path)})")
             annot.update()
