@@ -1,3 +1,4 @@
+import string
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from collections.abc import Container, Iterable
@@ -98,3 +99,45 @@ def match_text(base: State, text: List[Word]):
 def tokenize(text: str):
     tokens = [token for token in word_tokenize(text) if filter_token(token)]
     return [Word(token=normalize(w), pos=pos) for (pos, w) in enumerate(tokens)]
+
+
+def extract_pdf_words(doc: fitz.Document) -> List[PDFWord]:
+    raw_words = [
+        (page_no, word)
+        for (page_no, page) in enumerate(doc)
+        for word in page.get_text("words", sort=True, delimiters=string.punctuation)
+        if filter_token(word[4])
+    ]
+
+    return [
+        PDFWord(
+            token=normalize(word[4]),
+            pos=pos,
+            rect=fitz.Rect(word[0:4]),
+            page_no=page_no,
+            block_no=word[5],
+            line_no=word[6],
+            word_no=word[7],
+        )
+        for (pos, (page_no, word)) in enumerate(raw_words)
+    ]
+
+
+def merge_word_rects(words: List[PDFWord]):
+    retval: List[fitz.Rect] = []
+    last_word: Optional[PDFWord] = None
+    for word in words:
+        if len(retval) == 0:
+            retval.append(word.rect)
+        else:
+            if (
+                (last_word is not None)
+                and (last_word.block_no == word.block_no)
+                and (last_word.line_no == word.line_no)
+                and ((last_word.pos + 1) == word.pos)
+            ):
+                retval[-1].include_rect(word.rect)
+            else:
+                retval.append(word.rect)
+            last_word = word
+    return retval
