@@ -38,6 +38,8 @@ def main():
     state = make_state(words)
     color_no = 0
     for path in args.source_texts:
+        if os.path.splitext(path)[-1].lower() != ".pdf":
+            continue
         doc = fitz.open(path)
         title = doc.metadata["title"]
         author = doc.metadata["author"]
