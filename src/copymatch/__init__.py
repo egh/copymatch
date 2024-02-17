@@ -1,5 +1,6 @@
+from nltk.corpus import brown
+from collections import deque
 import sys
-import string
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from collections.abc import Container, Iterable
@@ -16,15 +17,19 @@ PUNCT_TBL = dict.fromkeys(
 class Word:
     token: str
     pos: int
+    ended_in_hyphen: bool
 
 
 @dataclass(eq=True, frozen=True)
 class PDFWord(Word):
-    rect: fitz.Rect
+    rects: Tuple[fitz.Rect, Optional[fitz.Rect]]
     page_no: int
     block_no: int
     line_no: int
     word_no: int
+
+
+WORDS = set(brown.words())
 
 
 @dataclass
@@ -98,29 +103,64 @@ def match_text(base: State, text: List[Word]):
 
 
 def tokenize(text: str):
-    tokens = [token for token in word_tokenize(text)]
-    return [Word(token=normalize(w), pos=pos) for (pos, w) in enumerate(tokens)]
+    return [
+        Word(token=normalize(w), pos=pos, ended_in_hyphen=(w[-1] == "-"))
+        for (pos, w) in enumerate(word_tokenize(text))
+    ]
+
+
+def merge_words(a: PDFWord, b: PDFWord):
+    return PDFWord(
+        token=(a.token + b.token),
+        pos=a.pos,
+        rects=(a.rects[0], b.rects[0]),
+        line_no=a.line_no,
+        page_no=a.page_no,
+        block_no=a.block_no,
+        word_no=a.word_no,
+        ended_in_hyphen=False,
+    )
+
+
+def merge_hyphenated(words: List[PDFWord]) -> List[PDFWord]:
+    todo = deque(words)
+    retval = []
+    last = None
+    while len(todo) > 0:
+        item = todo.popleft()
+        if last is not None:
+            if (last.token + item.token) in WORDS:
+                retval[-1] = merge_words(last, item)
+                last = None
+                continue
+        retval.append(item)
+        if item.ended_in_hyphen:
+            last = item
+        else:
+            last = None
+    return retval
 
 
 def extract_pdf_words(doc: fitz.Document) -> List[PDFWord]:
     raw_words = [
         (page_no, word)
         for (page_no, page) in enumerate(doc)
-        for word in page.get_text("words", sort=True, delimiters=string.punctuation)
+        for word in page.get_text("words", sort=True)
     ]
     words = [
         PDFWord(
             token=normalize(word[4]),
             pos=pos,
-            rect=fitz.Rect(word[0:4]),
+            rects=(fitz.Rect(word[0:4]), None),
             page_no=page_no,
             block_no=word[5],
             line_no=word[6],
             word_no=word[7],
+            ended_in_hyphen=(word[4][-1] == "-"),
         )
         for (pos, (page_no, word)) in enumerate(raw_words)
     ]
-    return [word for word in words if word.token != ""]
+    return merge_hyphenated([word for word in words if word.token != ""])
 
 
 def merge_word_rects(words: List[PDFWord]):
@@ -128,16 +168,21 @@ def merge_word_rects(words: List[PDFWord]):
     last_word: Optional[PDFWord] = None
     for word in words:
         if len(retval) == 0:
-            retval.append(word.rect)
+            retval.append(word.rects[0])
+            if word.rects[1] is not None:
+                retval.append(word.rects[1])
         else:
             if (
                 (last_word is not None)
+                and (last_word.rects[1] is None)
                 and (last_word.block_no == word.block_no)
                 and (last_word.line_no == word.line_no)
                 and ((last_word.pos + 1) == word.pos)
             ):
-                retval[-1].include_rect(word.rect)
+                retval[-1].include_rect(word.rects[0])
             else:
-                retval.append(word.rect)
+                retval.append(word.rects[0])
+                if word.rects[1] is not None:
+                    retval.append(word.rects[1])
             last_word = word
     return retval
