@@ -57,10 +57,6 @@ def normalize(token: str):
     return unicodedata.normalize("NFKD", token).casefold().translate(PUNCT_TBL)
 
 
-def filter_token(token: str):
-    return token.isalpha()
-
-
 # Assumption: Original text does not contain repeated bigrams, and if
 # so, which is marked as a match is not defined.
 def make_state(lst: List[Word], ngram_size=8):
@@ -102,7 +98,7 @@ def match_text(base: State, text: List[Word]):
 
 
 def tokenize(text: str):
-    tokens = [token for token in word_tokenize(text) if filter_token(token)]
+    tokens = [token for token in word_tokenize(text)]
     return [Word(token=normalize(w), pos=pos) for (pos, w) in enumerate(tokens)]
 
 
@@ -111,10 +107,8 @@ def extract_pdf_words(doc: fitz.Document) -> List[PDFWord]:
         (page_no, word)
         for (page_no, page) in enumerate(doc)
         for word in page.get_text("words", sort=True, delimiters=string.punctuation)
-        if filter_token(word[4])
     ]
-
-    return [
+    words = [
         PDFWord(
             token=normalize(word[4]),
             pos=pos,
@@ -126,6 +120,7 @@ def extract_pdf_words(doc: fitz.Document) -> List[PDFWord]:
         )
         for (pos, (page_no, word)) in enumerate(raw_words)
     ]
+    return [word for word in words if word.token != ""]
 
 
 def merge_word_rects(words: List[PDFWord]):
