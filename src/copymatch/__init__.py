@@ -1,3 +1,4 @@
+import sys
 import string
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
@@ -5,6 +6,10 @@ from collections.abc import Container, Iterable
 from nltk.tokenize import word_tokenize
 import fitz
 import unicodedata
+
+PUNCT_TBL = dict.fromkeys(
+    i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P")
+)
 
 
 @dataclass(eq=True, frozen=True)
@@ -49,7 +54,7 @@ class State(Container[str], Iterable[str]):
 
 
 def normalize(token: str):
-    return unicodedata.normalize("NFKD", token).casefold()
+    return unicodedata.normalize("NFKD", token).casefold().translate(PUNCT_TBL)
 
 
 def filter_token(token: str):

@@ -47,6 +47,9 @@ def test_normalize():
     assert normalize("FULFILL") == "fulfill"
     assert normalize("Straße") == "strasse"
     assert normalize("Congreſs") == "congress"
+    assert normalize("hello.") == "hello"
+    assert normalize(".&-") == ""
+    assert normalize("‘hello’") == "hello"
 
 
 def test_filter_token():
