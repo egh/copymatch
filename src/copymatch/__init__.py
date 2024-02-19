@@ -83,7 +83,7 @@ def make_state(lst: List[Word], ngram_size=8):
     return base
 
 
-def match_text(base: State, text: List[Word]):
+def match_text(base: State, text: List[Word], checker=None):
     next_states = [base]
     retval: List[Word] = []
     # Go through the text
@@ -92,12 +92,18 @@ def match_text(base: State, text: List[Word]):
         new_next_states = [base]
         for state in next_states:
             # Is this a permissible next term?
-            if word.token in state:
-                next_state = state[word.token]
+            if checker is None:
+                if word.token in state:
+                    next_state = state[word.token]
+                else:
+                    next_state = None
+            else:
+                next_state = checker(word.token, state)
+            if next_state is not None:
                 if next_state.end_state:
                     retval.extend(next_state.words)
                 else:
-                    new_next_states.append(state[word.token])
+                    new_next_states.append(next_state)
         next_states = new_next_states
     return sorted(set(retval), key=lambda word: word.pos)
 

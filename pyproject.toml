@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 nltk = "^3.8.1"
 pymupdf = "^1.23.22"
+levenshtein = "^0.25.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
