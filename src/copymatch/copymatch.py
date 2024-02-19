@@ -49,7 +49,11 @@ def main():
             page = original_doc[page_no]
             annot = page.add_highlight_annot(quads=merge_word_rects(words))
             annot.set_colors(stroke=convert_color(COLORS[color_no]))
-            annot.set_info(title=f"{author}, {title} ({os.path.basename(path)})")
+            annot.set_info(
+                title=author,
+                subject=f"{title} ({os.path.basename(path)})",
+                content=f"{author} / {title} ({os.path.basename(path)})",
+            )
             annot.update()
         color_no = (color_no + 1) % len(COLORS)
     original_doc.save("output.pdf")
