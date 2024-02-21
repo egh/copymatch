@@ -56,10 +56,18 @@ def main():
         default=0,
         help="Maximum edit distance between word that is considered a match (default is an exact match).",
     )
+    parser.add_argument(
+        "-l",
+        "--length",
+        type=int,
+        default=8,
+        help="Minimum number of required tokens matched to mark text (default is 8)",
+    )
+
     args = parser.parse_args()
     original_doc = fitz.open(args.analysis_text)
     words = extract_pdf_words(original_doc)
-    state = make_state(words)
+    state = make_state(words, ngram_size=args.length)
     color_no = 0
     for path in args.source_texts:
         if os.path.splitext(path)[-1].lower() != ".pdf":
