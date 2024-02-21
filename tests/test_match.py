@@ -1,4 +1,4 @@
-from copymatch import State, match_text, make_state, tokenize, normalize, filter_token
+from copymatch import State, match_text, make_state, tokenize, normalize
 
 
 def test_match():
@@ -50,8 +50,3 @@ def test_normalize():
     assert normalize("hello.") == "hello"
     assert normalize(".&-") == ""
     assert normalize("‘hello’") == "hello"
-
-
-def test_filter_token():
-    assert filter_token(".") is False
-    assert filter_token("word") is True
