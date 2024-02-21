@@ -34,7 +34,7 @@ WORDS = set(brown.words())
 
 @dataclass
 class State(Container[str], Iterable[str]):
-    next_tokens: Dict[str, "State"] = field(default_factory=dict)
+    transitions: Dict[str, "State"] = field(default_factory=dict)
     startpoints: List[int] = field(default_factory=list)
     end_state: bool = False
     length: int = 0
@@ -43,16 +43,16 @@ class State(Container[str], Iterable[str]):
     words: Optional[List[Word]] = None
 
     def __contains__(self, term: Any):
-        return term in self.next_tokens
+        return term in self.transitions
 
     def __iter__(self):
-        return self.next_tokens.__iter__()
+        return self.transitions.__iter__()
 
     def __getitem__(self, index: str):
-        return self.next_tokens[index]
+        return self.transitions[index]
 
     def __setitem__(self, index: str, item: "State"):
-        self.next_tokens[index] = item
+        self.transitions[index] = item
 
     def __len__(self):
         return self.length

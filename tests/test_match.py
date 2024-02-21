@@ -9,9 +9,9 @@ def test_match():
 
 def test_make_state():
     fsa = make_state(tokenize("hello world and goodbye"), 2)
-    assert set(fsa.next_tokens.keys()) == {"hello", "world", "and", "goodbye"}
-    assert fsa["goodbye"].next_tokens == {}
-    assert set(fsa["hello"].next_tokens.keys()) == {"world"}
+    assert set(fsa.transitions.keys()) == {"hello", "world", "and", "goodbye"}
+    assert fsa["goodbye"].transitions == {}
+    assert set(fsa["hello"].transitions.keys()) == {"world"}
     assert fsa["hello"]["world"].end_state == True
     assert fsa["hello"]["world"].words[0].token == "hello"
 
@@ -35,7 +35,7 @@ def test_make_state_large():
     ipsum. Praesent nec velit eu ex condimentum bibendum."""
     )
     base = make_state(t, ngram_size=6)
-    assert len(base.next_tokens) == 92
+    assert len(base.transitions) == 92
     matches = match_text(
         base, tokenize("lorem rutrum donec consectetur dui nec libero egestas")
     )
