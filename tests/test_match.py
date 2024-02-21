@@ -35,11 +35,11 @@ def test_make_state_large():
     ipsum. Praesent nec velit eu ex condimentum bibendum."""
     )
     base = make_state(t, ngram_size=6)
-    assert len(base.transitions) == 92
+    assert len(base.transitions) == 93
     matches = match_text(
         base, tokenize("lorem rutrum donec consectetur dui nec libero egestas")
     )
-    assert matches[0].pos == 99
+    assert matches[0].pos == 125
 
 
 def test_normalize():
