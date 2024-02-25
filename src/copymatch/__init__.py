@@ -1,3 +1,11 @@
+from sqlitedict import SqliteDict
+import zlib
+import pickle
+import sqlite3
+import hashlib
+import os
+from pathlib import Path
+from copymatch.parsr import ParsrClient
 from nltk.corpus import brown
 from collections import deque
 import sys
@@ -56,6 +64,13 @@ class State(Container[str], Iterable[str]):
 
     def __len__(self):
         return self.length
+
+
+def cache_file() -> Path:
+    return (
+        Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+        / "copymatch.db"
+    )
 
 
 def normalize(token: str):
@@ -147,7 +162,76 @@ def merge_hyphenated(words: List[PDFWord]) -> List[PDFWord]:
     return retval
 
 
-def extract_pdf_words(doc: fitz.Document) -> List[PDFWord]:
+def cache_encode(obj):
+    return sqlite3.Binary(zlib.compress(pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)))
+
+
+def cache_decode(obj):
+    return pickle.loads(zlib.decompress(bytes(obj)))
+
+
+def hash_path(path: str) -> str:
+    hash = hashlib.sha256()
+    with open(path, "rb") as f:
+        while block := f.read(4096):
+            hash.update(block)
+    return hash.hexdigest()
+
+
+def parsr(path: str):
+    sum = hash_path(path)
+    with SqliteDict(
+        cache_file(), encode=cache_encode, decode=cache_decode, autocommit=True
+    ) as db:
+        if sum not in db:
+            parsr = ParsrClient("localhost:3001")
+            resultid = parsr.send_document(
+                file_path=path,
+                config_path="defaultConfig.json",
+                wait_till_finished=True,
+            )["server_response"]
+            db[sum] = parsr.get_json(resultid)
+        return db[sum]
+#https://raw.githubusercontent.com/pd3f/dehyphen/master/dehyphen/scorer.py
+
+# TODO try https://github.com/pd3f/dehyphen/blob/master/dehyphen/format.py
+def extract_pdf_words_parsr(path: str) -> List[PDFWord]:
+    def word_filter(word):
+        if word["type"] != "word":
+            return False
+        if "isFooter" in word["properties"] and word["properties"]["isFooter"]:
+            return False
+        return True
+
+    def mk_rect(box):
+        return fitz.Rect(box["l"], box["t"], box["l"] + box["w"], box["t"] + box["h"])
+
+    j = parsr(path)
+
+    words = [
+        PDFWord(
+            token=normalize(word["content"]),
+            rects=(mk_rect(word["box"]), None),
+            pos=word["properties"]["order"],
+            word_no=word["properties"]["order"],
+            page_no=page["pageNumber"] - 1,
+            line_no=line["properties"]["order"],
+            block_no=paragraph["properties"]["order"],
+            ended_in_hyphen=(word["content"][-1] == "-"),
+        )
+        for page in j["pages"]
+        for paragraph in page["elements"]
+        if paragraph is not None and paragraph["type"] == "paragraph"
+        for line in paragraph["content"]
+        if line["type"] == "line"
+        for word in line["content"]
+        if word_filter(word)
+    ]
+    return merge_hyphenated(words)
+
+
+def extract_pdf_words(path: str) -> List[PDFWord]:
+    doc = fitz.open(path)
     raw_words = [
         (page_no, word)
         for (page_no, page) in enumerate(doc)

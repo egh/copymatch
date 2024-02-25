@@ -2,7 +2,13 @@ import os
 import itertools
 import fitz
 from typing import Tuple
-from copymatch import make_state, match_text, extract_pdf_words, merge_word_rects
+from copymatch import (
+    extract_pdf_words,
+    extract_pdf_words_parsr,
+    make_state,
+    match_text,
+    merge_word_rects,
+)
 import argparse
 import Levenshtein
 
@@ -63,10 +69,20 @@ def main():
         default=8,
         help="Minimum number of required tokens matched to mark text (default is 8)",
     )
+    parser.add_argument(
+        "-p",
+        "--parsr",
+        action="store_true",
+        help="Use parsr server for processing PDFs.",
+    )
 
     args = parser.parse_args()
+    if args.parsr:
+        extract_words_func = extract_pdf_words_parsr
+    else:
+        extract_words_func = extract_pdf_words
     original_doc = fitz.open(args.analysis_text)
-    words = extract_pdf_words(original_doc)
+    words = extract_words_func(args.analysis_text)
     state = make_state(words, ngram_size=args.length)
     color_no = 0
     for path in args.source_texts:
@@ -80,7 +96,7 @@ def main():
         else:
             checker = mk_checker(args.distance)
         for page_no, words in itertools.groupby(
-            match_text(state, extract_pdf_words(doc), checker=checker),
+            match_text(state, extract_words_func(path), checker=checker),
             lambda word: word.page_no,
         ):
             page = original_doc[page_no]
