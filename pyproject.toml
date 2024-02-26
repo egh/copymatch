@@ -16,6 +16,7 @@ sqlitedict = "^2.1.0"
 black = "^24.2.0"
 pytest = "^8.0.0"
 mypy = "^1.8.0"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]

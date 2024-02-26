@@ -14,19 +14,17 @@
 # limitations under the License.
 #
 
-from glob import glob
-from itertools import chain
-from io import StringIO
-from os import path
-from os import chdir
-from json import loads
-from time import sleep
 from ast import literal_eval
-from requests import post
-from requests import get
-from semver import VersionInfo
+from glob import glob
+from io import StringIO
+from itertools import chain
+from json import loads
+from os import chdir, path
+from time import sleep
 
 import diff_match_patch
+from requests import get, post
+from semver import VersionInfo
 from sxsdiff import DiffCalculator
 from sxsdiff.generators.github import GitHubStyledGenerator
 

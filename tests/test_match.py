@@ -1,4 +1,4 @@
-from copymatch import State, match_text, make_state, tokenize, normalize
+from copymatch import State, make_state, match_text, normalize, tokenize
 
 
 def test_match():

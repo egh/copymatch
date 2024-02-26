@@ -1,20 +1,22 @@
-from sqlitedict import SqliteDict
-import zlib
-import pickle
-import sqlite3
 import hashlib
 import os
-from pathlib import Path
-from copymatch.parsr import ParsrClient
-from nltk.corpus import brown
-from collections import deque
+import pickle
+import sqlite3
 import sys
-from typing import List, Dict, Any, Optional, Tuple
-from dataclasses import dataclass, field
-from collections.abc import Container, Iterable
-from nltk.tokenize import word_tokenize
-import fitz
 import unicodedata
+import zlib
+from collections import deque
+from collections.abc import Container, Iterable
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import fitz
+from nltk.corpus import brown
+from nltk.tokenize import word_tokenize
+from sqlitedict import SqliteDict
+
+from copymatch.parsr import ParsrClient
 
 PUNCT_TBL = dict.fromkeys(
     i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P")

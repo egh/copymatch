@@ -1,7 +1,11 @@
-import os
+import argparse
 import itertools
-import fitz
+import os
 from typing import Tuple
+
+import fitz
+import Levenshtein
+
 from copymatch import (
     extract_pdf_words,
     extract_pdf_words_parsr,
@@ -9,8 +13,6 @@ from copymatch import (
     match_text,
     merge_word_rects,
 )
-import argparse
-import Levenshtein
 
 COLORS = [
     0x7DE198,
