@@ -9,7 +9,7 @@ from collections import deque
 from collections.abc import Container, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import fitz
 from nltk.corpus import brown
@@ -73,6 +73,16 @@ def cache_file() -> Path:
         Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
         / "copymatch.db"
     )
+
+
+def parse_page_range(page_range: str) -> Generator[int, str, None]:
+    for part in page_range.split(","):
+        nums = [int(x) for x in part.split("-")]
+        if len(nums) == 1:
+            yield nums[0]
+        else:
+            for num in range(nums[0], nums[1] + 1):
+                yield num
 
 
 def normalize(token: str):
@@ -194,7 +204,10 @@ def parsr(path: str):
             )["server_response"]
             db[sum] = parsr.get_json(resultid)
         return db[sum]
-#https://raw.githubusercontent.com/pd3f/dehyphen/master/dehyphen/scorer.py
+
+
+# https://raw.githubusercontent.com/pd3f/dehyphen/master/dehyphen/scorer.py
+
 
 # TODO try https://github.com/pd3f/dehyphen/blob/master/dehyphen/format.py
 def extract_pdf_words_parsr(path: str) -> List[PDFWord]:

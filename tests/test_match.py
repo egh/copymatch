@@ -1,4 +1,11 @@
-from copymatch import State, make_state, match_text, normalize, tokenize
+from copymatch import (
+    State,
+    make_state,
+    match_text,
+    normalize,
+    parse_page_range,
+    tokenize,
+)
 
 
 def test_match():
@@ -50,3 +57,9 @@ def test_normalize():
     assert normalize("hello.") == "hello"
     assert normalize(".&-") == ""
     assert normalize("‘hello’") == "hello"
+
+
+def test_page_range():
+    assert list(parse_page_range("1-2")) == [1, 2]
+    assert list(parse_page_range("1,2")) == [1, 2]
+    assert list(parse_page_range("1,2-5,8")) == [1, 2, 3, 4, 5, 8]
