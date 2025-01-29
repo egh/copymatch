@@ -11,6 +11,10 @@ nltk = "^3.8.1"
 pymupdf = "^1.23.22"
 levenshtein = "^0.25.0"
 sqlitedict = "^2.1.0"
+diff-match-patch = "^20241021"
+requests = "^2.32.3"
+semver = "^3.0.4"
+sxsdiff = "^0.3.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
