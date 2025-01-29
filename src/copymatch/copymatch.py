@@ -97,18 +97,29 @@ def main():
             checker = None
         else:
             checker = mk_checker(args.distance)
+        # We don't want sticky notes to overlap, so keep track of the
+        # last sticky note height and page and move it down a bit if
+        # we'd otherwise overlap.
+        last_sticky_rect = None
         for page_no, words in itertools.groupby(
             match_text(state, extract_words_func(path), checker=checker),
             lambda word: word.page_no,
         ):
+            rects = merge_word_rects(words)
             page = original_doc[page_no]
-            annot = page.add_highlight_annot(quads=merge_word_rects(words))
-            annot.set_colors(stroke=convert_color(COLORS[color_no]))
-            annot.set_info(
-                title=author,
-                subject=f"{title} ({os.path.basename(path)})",
-                content=f"{author} / {title} ({os.path.basename(path)})",
-            )
-            annot.update()
-        color_no = (color_no + 1) % len(COLORS)
+            info = f"{author}, {title} ({os.path.basename(path)})"
+            highlight = page.add_highlight_annot(quads=rects)
+            highlight.set_colors(stroke=convert_color(COLORS[color_no]))
+            highlight.set_info(title=info)
+            highlight.update()
+
+            sticky = page.add_text_annot((10, rects[0].y0), info)
+            if last_sticky_rect is not None and last_sticky_rect.intersects(
+                sticky.rect
+            ):
+                sticky.set_rect(sticky.rect.transform(fitz.Matrix(a=1.0, d=1.0, f=25)))
+            sticky.set_colors(stroke=convert_color(COLORS[color_no]))
+            sticky.update()
+            last_sticky_rect = sticky.rect
+            color_no = (color_no + 1) % len(COLORS)
     original_doc.save("output.pdf")
