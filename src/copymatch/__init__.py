@@ -41,6 +41,8 @@ class PDFWord(Word):
 
 WORDS = set(brown.words())
 
+# https://en.wikipedia.org/wiki/Suffix_tree??
+
 
 @dataclass
 class State(Container[str], Iterable[str]):
